@@ -6,9 +6,13 @@ import { supabaseEnv } from "@/lib/supabase/env";
 import { rm } from "@/lib/format";
 
 export const runtime = "nodejs";
-export const maxDuration = 30;
+// Vercel's Hobby plan allows up to 60s; we stop ourselves well before that.
+export const maxDuration = 60;
 
 const MODEL = "gemini-flash-latest";
+
+/** Stop waiting on Gemini after this, so the person gets words not a 504. */
+const ANSWER_TIMEOUT_MS = 25_000;
 
 const SYSTEM_PROMPT = `You are Sprout, the helper inside the Township Green Loop
 app, used by people funding a Malaysian township's green assets. You help with
@@ -190,54 +194,70 @@ export async function POST(request: Request) {
   }
 
   try {
-    const catalogue = await getCatalogue();
-    const ai = new GoogleGenAI({ apiKey });
     const history = (body.history ?? []).slice(-6).map((turn) => ({
       role: turn.role === "model" ? "model" : "user",
       parts: [{ text: String(turn.text).slice(0, 1500) }],
     }));
 
-    const stream = await ai.models.generateContentStream({
-      model: MODEL,
-      contents: [...history, { role: "user", parts: [{ text: message.slice(0, 1500) }] }],
-      config: {
-        systemInstruction: `${SYSTEM_PROMPT}\n\nCONTEXT:\n${catalogue}\n\n${personal}`,
-        temperature: 0.4,
-        maxOutputTokens: 600,
-      },
-    });
-
-    // Stream the text back so the first words appear in about a second
-    // instead of the whole answer landing at once.
     const encoder = new TextEncoder();
+
+    // Everything slow happens inside the stream. Returning the Response first
+    // means the browser has the connection straight away, so a slow reply from
+    // Gemini can no longer turn into a gateway timeout.
     const body$ = new ReadableStream<Uint8Array>({
       async start(controller) {
         let sent = false;
+        const say = (text: string) => {
+          sent = true;
+          controller.enqueue(encoder.encode(text));
+        };
+
+        // Give up before the platform does, so the person gets a sentence
+        // rather than a 504.
+        const abort = new AbortController();
+        const giveUp = setTimeout(() => abort.abort(), ANSWER_TIMEOUT_MS);
+
         try {
+          const catalogue = await getCatalogue();
+          const ai = new GoogleGenAI({ apiKey });
+
+          const stream = await ai.models.generateContentStream({
+            model: MODEL,
+            contents: [
+              ...history,
+              { role: "user", parts: [{ text: message.slice(0, 1500) }] },
+            ],
+            config: {
+              systemInstruction: `${SYSTEM_PROMPT}\n\nCONTEXT:\n${catalogue}\n\n${personal}`,
+              temperature: 0.4,
+              maxOutputTokens: 600,
+              abortSignal: abort.signal,
+            },
+          });
+
           for await (const chunk of stream) {
-            const text = chunk.text;
-            if (text) {
-              sent = true;
-              controller.enqueue(encoder.encode(text));
-            }
+            if (chunk.text) say(chunk.text);
           }
+
           if (!sent) {
-            controller.enqueue(
-              encoder.encode(
-                "Sorry, I could not answer that one. Try asking it a different way.",
-              ),
-            );
+            say("Sorry, I could not answer that one. Try asking it a different way.");
           }
         } catch (error) {
-          console.error("agent stream error", error);
-          controller.enqueue(
-            encoder.encode(
-              sent
-                ? "\n\n(Sorry — I lost my train of thought there.)"
-                : "I could not be reached just now. Please try again in a moment.",
-            ),
-          );
+          const timedOut = abort.signal.aborted;
+          console.error("agent stream error", timedOut ? "timed out" : error);
+
+          if (sent) {
+            say("\n\n(Sorry — I lost my train of thought there.)");
+          } else if (timedOut) {
+            say(
+              "That took longer than I could wait. Please ask me again — it is " +
+                "usually quicker the second time.",
+            );
+          } else {
+            say("I could not be reached just now. Please try again in a moment.");
+          }
         } finally {
+          clearTimeout(giveUp);
           controller.close();
         }
       },
