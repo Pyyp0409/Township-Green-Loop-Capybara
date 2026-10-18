@@ -1,18 +1,19 @@
-import { GoogleGenAI } from "@google/genai";
+import Anthropic from "@anthropic-ai/sdk";
 import { unstable_cache } from "next/cache";
 import { createClient as createPublicClient } from "@supabase/supabase-js";
 import { createClient } from "@/lib/supabase/server";
 import { supabaseEnv } from "@/lib/supabase/env";
 import { rm } from "@/lib/format";
+import { fallbackAnswer, type SproutFacts, type PoolFact } from "@/lib/sprout-script";
 
 export const runtime = "nodejs";
 // Vercel's Hobby plan allows up to 60s; we stop ourselves well before that.
 export const maxDuration = 60;
 
-const MODEL = "gemini-flash-latest";
+const MODEL = "claude-haiku-5-5";
 
-/** Stop waiting on Gemini after this, so the person gets words not a 504. */
-const ANSWER_TIMEOUT_MS = 25_000;
+/** Stop waiting on the model after this, so the person gets words not a 504. */
+const ANSWER_TIMEOUT_MS = 20_000;
 
 const SYSTEM_PROMPT = `You are Sprout, the helper inside the Township Green Loop
 app, used by people funding a Malaysian township's green assets. You help with
@@ -22,6 +23,9 @@ bills, the wallet and mall credits, rewards, badges and the community space.
 How to answer:
 - Simple, everyday English. Short sentences. No jargon. Warm and encouraging.
 - Be brief. Three or four short sentences unless asked for detail.
+- Plain text only. The chat window shows your words exactly as you write them
+  and does not understand markdown, so never use *, **, # or backticks. To list
+  things, put each on its own line starting with "• ".
 - Use ONLY the figures in the context below. Never invent a rate, a return, a
   points value or a balance. If it is not in the context, say you do not have it.
 - Money is Malaysian ringgit, written like RM1,234.56.
@@ -37,7 +41,8 @@ How to answer:
 
 /**
  * The catalogue is the same for everybody and changes rarely, so it is built
- * once and reused. This is what made every message wait on ten round trips.
+ * once and reused. It is also the cached half of the prompt, so it must stay
+ * byte-identical between requests — nothing dated or random belongs in here.
  */
 const getCatalogue = unstable_cache(
   async () => {
@@ -53,6 +58,16 @@ const getCatalogue = unstable_cache(
         // never checkin_code
         supabase.from("activities").select("title, points, location").order("id"),
       ]);
+
+    const poolFacts: PoolFact[] = (pools ?? []).map((p) => ({
+      id: p.id,
+      name: p.name,
+      risk: p.risk,
+      rate: Number(p.rate),
+      payback_years: p.payback_years,
+      min_invest: Number(p.min_invest),
+      max_invest: Number(p.max_invest),
+    }));
 
     const poolLines = (pools ?? [])
       .map(
@@ -76,7 +91,7 @@ const getCatalogue = unstable_cache(
       .map((a) => `- ${a.title}: ${a.points} points${a.location ? `, at ${a.location}` : ""}`)
       .join("\n");
 
-    return `THE THREE POOLS (the only rates you may quote):
+    const text = `THE THREE POOLS (the only rates you may quote):
 ${poolLines}
 
 LIMITS: each pool has its own maximum per resident above, and at most
@@ -103,6 +118,25 @@ OTHER THINGS YOU CAN EXPLAIN:
   less than the month before earns points automatically.
 - Community: one shared space for residents, mall shops and the township admin.
 - Money is held in trust by a licensed market operator, never by the app itself.`;
+
+    return {
+      text,
+      pools: poolFacts,
+      rules: (rules ?? []).map((r) => ({
+        title: r.title,
+        detail: r.detail,
+        points: Number(r.points),
+      })),
+      badges: (allBadges ?? []).map((b) => ({
+        name: b.name,
+        min_points: Number(b.min_points),
+      })),
+      activities: (activities ?? []).map((a) => ({
+        title: a.title,
+        points: Number(a.points),
+        location: a.location,
+      })),
+    };
   },
   ["agent-catalogue"],
   { revalidate: 300, tags: ["agent-catalogue"] },
@@ -136,33 +170,40 @@ async function getPersonal() {
   for (const inv of investments ?? []) {
     byPool.set(inv.pool_id, (byPool.get(inv.pool_id) ?? 0) + Number(inv.amount));
   }
-  const holdings =
-    byPool.size > 0
-      ? [...byPool.entries()].map(([pool, total]) => `- ${pool}: ${rm(total)}`).join("\n")
-      : "- none yet";
+  const holdings = [...byPool.entries()].map(([pool, total]) => ({ pool, total }));
 
   const myBadges =
     Array.isArray(badges) && badges.length > 0
-      ? (badges as { name: string }[]).map((b) => b.name).join(", ")
-      : "none yet";
+      ? (badges as { name: string }[]).map((b) => b.name)
+      : [];
 
-  const who =
-    profile?.membership === "supporter"
-      ? `A supporter who funds this township from ${profile?.home_city ?? "elsewhere"}. ` +
-        "They invest and earn the same returns, but activity check-ins are only for " +
-        "people who take part in person, so they cannot ask to check in. They can " +
-        "still earn points by converting wallet money. Never tell them to check in."
-      : `A resident who lives in ${profile?.township ?? "the township"} and can do everything.`;
+  const isSupporter = profile?.membership === "supporter";
 
-  return `THIS MEMBER:
+  const who = isSupporter
+    ? `A supporter who funds this township from ${profile?.home_city ?? "elsewhere"}. ` +
+      "They invest and earn the same returns, but activity check-ins are only for " +
+      "people who take part in person, so they cannot ask to check in. They can " +
+      "still earn points by converting wallet money. Never tell them to check in."
+    : `A resident who lives in ${profile?.township ?? "the township"} and can do everything.`;
+
+  const text = `THIS MEMBER:
 ${who}
 
 THEIR OWN DATA:
 Wallet balance: ${rm(Number(wallet ?? 0))}
 Points balance: ${Number(points ?? 0)}
-Badges earned: ${myBadges}
+Badges earned: ${myBadges.length > 0 ? myBadges.join(", ") : "none yet"}
 Active investments:
-${holdings}`;
+${holdings.length > 0 ? holdings.map((h) => `- ${h.pool}: ${rm(h.total)}`).join("\n") : "- none yet"}`;
+
+  return {
+    text,
+    wallet: Number(wallet ?? 0),
+    points: Number(points ?? 0),
+    myBadges,
+    holdings,
+    isSupporter,
+  };
 }
 
 export async function POST(request: Request) {
@@ -183,99 +224,114 @@ export async function POST(request: Request) {
     return Response.json({ error: "Please sign in again." }, { status: 401 });
   }
 
-  const apiKey = process.env.GEMINI_API_KEY;
-  if (!apiKey) {
-    return new Response(
-      "I am offline right now because no AI key is set up. You can still find " +
-        "everything yourself: pool rates and risks on Invest, how to earn points " +
-        "on Points, and your own numbers on Home.",
-      { headers: { "Content-Type": "text/plain; charset=utf-8" } },
-    );
+  const plainText = {
+    "Content-Type": "text/plain; charset=utf-8",
+    "Cache-Control": "no-store",
+    // Stops proxies holding the whole body before sending it on.
+    "X-Accel-Buffering": "no",
+  };
+
+  /** The figures the safety net answers from, so it never invents one either. */
+  const factsFrom = (catalogue: Awaited<ReturnType<typeof getCatalogue>>): SproutFacts => ({
+    pools: catalogue.pools,
+    rules: catalogue.rules,
+    badges: catalogue.badges,
+    activities: catalogue.activities,
+    wallet: personal.wallet,
+    points: personal.points,
+    myBadges: personal.myBadges,
+    holdings: personal.holdings,
+    isSupporter: personal.isSupporter,
+  });
+
+  // No key configured: the app must still answer, so fall straight through to
+  // the scripted layer rather than apologising.
+  if (!process.env.ANTHROPIC_API_KEY) {
+    const catalogue = await getCatalogue();
+    return new Response(fallbackAnswer(message, factsFrom(catalogue)), { headers: plainText });
   }
 
-  try {
-    const history = (body.history ?? []).slice(-6).map((turn) => ({
-      role: turn.role === "model" ? "model" : "user",
-      parts: [{ text: String(turn.text).slice(0, 1500) }],
-    }));
+  // The client speaks Gemini's dialect ("model"); the API wants "assistant".
+  const history = (body.history ?? []).slice(-6).map((turn) => ({
+    role: turn.role === "model" ? ("assistant" as const) : ("user" as const),
+    content: String(turn.text).slice(0, 1500),
+  }));
 
-    const encoder = new TextEncoder();
+  const encoder = new TextEncoder();
 
-    // Everything slow happens inside the stream. Returning the Response first
-    // means the browser has the connection straight away, so a slow reply from
-    // Gemini can no longer turn into a gateway timeout.
-    const body$ = new ReadableStream<Uint8Array>({
-      async start(controller) {
-        let sent = false;
-        const say = (text: string) => {
-          sent = true;
-          controller.enqueue(encoder.encode(text));
-        };
+  // Everything slow happens inside the stream. Returning the Response first
+  // means the browser has the connection straight away, so a slow reply can no
+  // longer turn into a gateway timeout.
+  const body$ = new ReadableStream<Uint8Array>({
+    async start(controller) {
+      let sent = false;
+      const say = (text: string) => {
+        sent = true;
+        controller.enqueue(encoder.encode(text));
+      };
 
-        // Give up before the platform does, so the person gets a sentence
-        // rather than a 504.
-        const abort = new AbortController();
-        const giveUp = setTimeout(() => abort.abort(), ANSWER_TIMEOUT_MS);
+      // Give up before the platform does, so the person gets a sentence
+      // rather than a 504.
+      const abort = new AbortController();
+      const giveUp = setTimeout(() => abort.abort(), ANSWER_TIMEOUT_MS);
+      let catalogue: Awaited<ReturnType<typeof getCatalogue>> | null = null;
 
-        try {
-          const catalogue = await getCatalogue();
-          const ai = new GoogleGenAI({ apiKey });
+      try {
+        catalogue = await getCatalogue();
+        const client = new Anthropic();
 
-          const stream = await ai.models.generateContentStream({
+        const stream = client.messages.stream(
+          {
             model: MODEL,
-            contents: [
-              ...history,
-              { role: "user", parts: [{ text: message.slice(0, 1500) }] },
+            max_tokens: 700,
+            // Sprout answers from the context it is handed. Thinking would only
+            // add seconds before the first word, and a quick reply is the whole
+            // point of the bubble.
+            thinking: { type: "disabled" },
+            system: [
+              {
+                type: "text",
+                text: `${SYSTEM_PROMPT}\n\nCONTEXT:\n${catalogue.text}`,
+                // Identical for every member, so it is cached once and read
+                // back cheaply on every later question.
+                cache_control: { type: "ephemeral" },
+              },
+              // This member's own figures sit after the breakpoint, so one
+              // person's balances never land in another person's cache.
+              { type: "text", text: personal.text },
             ],
-            config: {
-              systemInstruction: `${SYSTEM_PROMPT}\n\nCONTEXT:\n${catalogue}\n\n${personal}`,
-              temperature: 0.4,
-              maxOutputTokens: 600,
-              abortSignal: abort.signal,
-            },
-          });
+            messages: [...history, { role: "user", content: message.slice(0, 1500) }],
+          },
+          { signal: abort.signal },
+        );
 
-          for await (const chunk of stream) {
-            if (chunk.text) say(chunk.text);
+        for await (const event of stream) {
+          if (event.type === "content_block_delta" && event.delta.type === "text_delta") {
+            say(event.delta.text);
           }
-
-          if (!sent) {
-            say("Sorry, I could not answer that one. Try asking it a different way.");
-          }
-        } catch (error) {
-          const timedOut = abort.signal.aborted;
-          console.error("agent stream error", timedOut ? "timed out" : error);
-
-          if (sent) {
-            say("\n\n(Sorry — I lost my train of thought there.)");
-          } else if (timedOut) {
-            say(
-              "That took longer than I could wait. Please ask me again — it is " +
-                "usually quicker the second time.",
-            );
-          } else {
-            say("I could not be reached just now. Please try again in a moment.");
-          }
-        } finally {
-          clearTimeout(giveUp);
-          controller.close();
         }
-      },
-    });
 
-    return new Response(body$, {
-      headers: {
-        "Content-Type": "text/plain; charset=utf-8",
-        "Cache-Control": "no-store",
-        // Stops proxies holding the whole body before sending it on.
-        "X-Accel-Buffering": "no",
-      },
-    });
-  } catch (error) {
-    console.error("agent error", error);
-    return new Response(
-      "I could not be reached just now. Please try again in a moment.",
-      { headers: { "Content-Type": "text/plain; charset=utf-8" } },
-    );
-  }
+        if (!sent) {
+          say(fallbackAnswer(message, factsFrom(catalogue)));
+        }
+      } catch (error) {
+        const timedOut = abort.signal.aborted;
+        console.error("agent stream error", timedOut ? "timed out" : error);
+
+        if (sent) {
+          say("\n\n(Sorry — I lost my train of thought there.)");
+        } else if (catalogue) {
+          // The model is unreachable, but the township's own numbers are not.
+          say(fallbackAnswer(message, factsFrom(catalogue)));
+        } else {
+          say("I could not be reached just now. Please try again in a moment.");
+        }
+      } finally {
+        clearTimeout(giveUp);
+        controller.close();
+      }
+    },
+  });
+
+  return new Response(body$, { headers: plainText });
 }

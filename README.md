@@ -99,9 +99,13 @@ the first 14 days of every raise and at least 70% of each pool.
 
 ### 6. Sprout, the in-app helper
 
-A Gemini Flash agent that answers questions about pools, points, bills, rewards
+A Claude Haiku agent that answers questions about pools, points, bills, rewards
 and badges using only the township's real figures and the signed-in user's own
 data. It is told never to invent a rate and always to flag the EV pool's risk.
+
+Sprout degrades rather than fails. If the model cannot be reached, a scripted
+layer answers the common questions from the same database rows the model would
+have read, so the helper keeps working during an outage instead of apologising.
 
 ---
 
@@ -114,7 +118,8 @@ data. It is told never to invent a rate and always to flag the EV pool's risk.
 | Database & auth | Supabase (Postgres, Row Level Security, cookie sessions) |
 | Charts | Recharts |
 | Icons / QR | lucide-react, qrcode.react |
-| AI | Google Gemini Flash (`@google/genai`), streamed |
+| AI | Claude Haiku 5.5 (`@anthropic-ai/sdk`), streamed, prompt-cached |
+| Bill OCR | Claude Haiku 5.5 vision, structured JSON output |
 | Hosting | Vercel |
 
 Everything runs on free tiers.
@@ -130,7 +135,7 @@ Everything runs on free tiers.
                  │                                          │
                  │  Server Components ── read via SSR client│
                  │  Server Actions ───── write via SSR client│
-                 │  /api/agent ───────── Gemini, streamed   │
+                 │  /api/agent ───────── Claude, streamed   │
                  │  /api/scan-bill ───── Gemini vision      │
                  │  /api/report ──────── CSV export         │
                  └───────────────┬──────────────────────────┘
@@ -221,7 +226,8 @@ npm run dev                  # http://localhost:3000
 ```
 NEXT_PUBLIC_SUPABASE_URL=
 NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY=
-GEMINI_API_KEY=              # optional — Sprout says "offline" without it
+ANTHROPIC_API_KEY=           # optional — Sprout falls back to scripted
+                             #   answers and bill scanning asks you to type
 ```
 
 The Supabase `service_role` key is not used anywhere and must not be added.

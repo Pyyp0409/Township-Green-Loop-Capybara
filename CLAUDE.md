@@ -7,14 +7,14 @@ Goal: a working, publicly reachable PWA demo (Vercel) on top of an existing Supa
 - Next.js (App Router, TypeScript), Tailwind CSS, `@supabase/supabase-js` + `@supabase/ssr` (cookie-based auth, middleware refresh).
 - Charts: `recharts`. Icons: `lucide-react`. QR: `qrcode.react`.
 - PWA: `app/manifest.ts` + icons; installable on phone.
-- AI advisor: Google Gemini Flash via a server route (`app/api/advisor/route.ts`), key in `GEMINI_API_KEY` (server only). If the key is missing, return a friendly "advisor offline" message – the app must still work.
+- AI: Claude Haiku 5.5 (`@anthropic-ai/sdk`) via server routes — `app/api/agent/route.ts` (Sprout, streamed) and `app/api/scan-bill/route.ts` (bill OCR). Key in `ANTHROPIC_API_KEY` (server only). If the key is missing the app must still work: Sprout answers from `lib/sprout-script.ts` using real database figures, and bill scanning asks the resident to type the numbers.
 - Deploy: GitHub `Pyyp0409/Township-Green-Loop-Capybara` → Vercel.
 
 ## Environment (`.env.local`, never commit; same values in Vercel)
 ```
 NEXT_PUBLIC_SUPABASE_URL=https://ltqsoufxniolxzzfzswj.supabase.co
 NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY=<publishable key>
-GEMINI_API_KEY=<later>
+ANTHROPIC_API_KEY=<server only>
 ```
 Never use or ask for the service_role / secret key. All security is enforced by RLS + the database functions below.
 
