@@ -1,0 +1,50 @@
+@import "tailwindcss";
+
+@theme {
+  /* Brand scale built around Deep Teal #215D4A, with Mint and Seafoam
+     as the light tints. */
+  --color-brand-50: #f2f8f5;
+  --color-brand-100: #d7eae0; /* Mint */
+  --color-brand-200: #99c5b5; /* Seafoam */
+  --color-brand-300: #6fae99;
+  --color-brand-400: #4a917c;
+  --color-brand-500: #2f7762;
+  --color-brand-600: #286b57;
+  --color-brand-700: #215d4a; /* Deep Teal — primary */
+  --color-brand-800: #1a4a3b;
+  --color-brand-900: #133629;
+
+  --font-sans: var(--font-inter), ui-sans-serif, system-ui, sans-serif;
+}
+
+:root {
+  --page: #f6f9f7;
+}
+
+html,
+body {
+  background-color: var(--page);
+  color: #15231d;
+  -webkit-tap-highlight-color: transparent;
+}
+
+/* Inter's tabular figures keep ringgit columns from shifting. */
+.tabular {
+  font-variant-numeric: tabular-nums;
+}
+
+/* Printable QR posters: one activity per sheet, no app chrome. */
+@media print {
+  body {
+    background: #fff;
+  }
+
+  nav,
+  header {
+    display: none !important;
+  }
+
+  @page {
+    margin: 12mm;
+  }
+}

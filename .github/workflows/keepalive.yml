@@ -1,0 +1,29 @@
+# Free Supabase projects pause after 7 idle days. One cheap read every 3 days
+# keeps the demo database awake for the judges.
+name: Supabase keep-alive
+
+on:
+  schedule:
+    - cron: "17 3 */3 * *"
+  workflow_dispatch:
+
+jobs:
+  ping:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Read one row from pools
+        env:
+          SUPABASE_URL: https://ltqsoufxniolxzzfzswj.supabase.co
+          SUPABASE_PUBLISHABLE_KEY: ${{ secrets.SUPABASE_PUBLISHABLE_KEY }}
+        run: |
+          if [ -z "$SUPABASE_PUBLISHABLE_KEY" ]; then
+            echo "Missing repo secret SUPABASE_PUBLISHABLE_KEY"
+            exit 1
+          fi
+          code=$(curl -s -o /tmp/out.json -w "%{http_code}" \
+            -H "apikey: $SUPABASE_PUBLISHABLE_KEY" \
+            -H "Authorization: Bearer $SUPABASE_PUBLISHABLE_KEY" \
+            "$SUPABASE_URL/rest/v1/pools?select=id&limit=1")
+          echo "HTTP $code"
+          cat /tmp/out.json
+          test "$code" = "200"
