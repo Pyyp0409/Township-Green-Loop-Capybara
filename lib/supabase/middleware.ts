@@ -37,11 +37,15 @@ export async function updateSession(request: NextRequest) {
   } = await supabase.auth.getUser();
 
   const path = request.nextUrl.pathname;
+
+  // The community is shared by all three roles — it only needs a session.
+  const shared = path === "/community" || path.startsWith("/community/");
+
   const area = Object.keys(ROLE_HOME_PREFIX).find(
     (prefix) => path === prefix || path.startsWith(`${prefix}/`),
   );
 
-  if (!area) return response;
+  if (!area && !shared) return response;
 
   if (!user) {
     const login = request.nextUrl.clone();
@@ -49,6 +53,9 @@ export async function updateSession(request: NextRequest) {
     login.search = `?next=${encodeURIComponent(path)}`;
     return NextResponse.redirect(login);
   }
+
+  if (shared) return response;
+  if (!area) return response;
 
   // RLS is the real guard; this only keeps people from landing on a page
   // that would be empty for them.

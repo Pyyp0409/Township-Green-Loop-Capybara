@@ -3,6 +3,8 @@ import { createClient, getProfile } from "@/lib/supabase/server";
 import { Card, Empty, Section, Stat } from "@/components/ui";
 import { SavingChart, type SavingPoint } from "@/components/charts/saving-chart";
 import { RoleShell } from "@/app/role-shell";
+import Link from "next/link";
+import { ChevronRight, Tag, Users } from "lucide-react";
 import { dayLabel, monthLabel, num, rm } from "@/lib/format";
 import { AcceptForm } from "./accept-form";
 
@@ -66,6 +68,39 @@ export default async function MerchantHome() {
           {shop.upgraded ? " · energy upgrade installed" : ""}
         </p>
       ) : null}
+
+      <Section title="Shortcuts">
+        <div className="space-y-3">
+          <Link href="/shop/promotions" className="block">
+            <Card className="flex items-center gap-3">
+              <Tag className="h-5 w-5 shrink-0 text-brand-700" aria-hidden />
+              <span className="min-w-0 flex-1">
+                <span className="block text-sm font-medium text-slate-900">
+                  Offers
+                </span>
+                <span className="block text-xs text-slate-500">
+                  Accept or decline what the township proposes
+                </span>
+              </span>
+              <ChevronRight className="h-4 w-4 shrink-0 text-slate-400" aria-hidden />
+            </Card>
+          </Link>
+          <Link href="/community" className="block">
+            <Card className="flex items-center gap-3">
+              <Users className="h-5 w-5 shrink-0 text-brand-700" aria-hidden />
+              <span className="min-w-0 flex-1">
+                <span className="block text-sm font-medium text-slate-900">
+                  Community
+                </span>
+                <span className="block text-xs text-slate-500">
+                  Talk to residents and the township team
+                </span>
+              </span>
+              <ChevronRight className="h-4 w-4 shrink-0 text-slate-400" aria-hidden />
+            </Card>
+          </Link>
+        </div>
+      </Section>
 
       <Section title="Accept a code">
         <AcceptForm />

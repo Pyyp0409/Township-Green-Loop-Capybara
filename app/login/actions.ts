@@ -38,12 +38,16 @@ export async function signIn(
   const role = (profile?.role as Role | undefined) ?? "resident";
   revalidatePath("/", "layout");
 
-  // Honour ?next= only when it points inside this user's own area.
+  // Honour ?next= only when it points inside this user's own area, or at the
+  // community, which every role shares.
   const home = HOME_FOR_ROLE[role];
-  const target =
-    next.startsWith("/") && (next === home || next.startsWith(`${home}/`))
-      ? next
-      : home;
+  const allowed =
+    next.startsWith("/") &&
+    (next === home ||
+      next.startsWith(`${home}/`) ||
+      next === "/community" ||
+      next.startsWith("/community/"));
+  const target = allowed ? next : home;
 
   redirect(target);
 }

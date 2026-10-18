@@ -13,7 +13,12 @@ export async function signUp(
   const fullName = String(formData.get("full_name") ?? "").trim();
   const email = String(formData.get("email") ?? "").trim();
   const password = String(formData.get("password") ?? "");
+  const membership =
+    String(formData.get("membership") ?? "resident") === "supporter"
+      ? "supporter"
+      : "resident";
   const township = String(formData.get("township") ?? "").trim();
+  const homeCity = String(formData.get("home_city") ?? "").trim();
 
   if (!fullName) return { error: "Enter your name.", checkEmail: false };
   if (!email) return { error: "Enter your email.", checkEmail: false };
@@ -38,12 +43,16 @@ export async function signUp(
   // Email confirmation is on: there is no session until they click the link.
   if (!data.session) return { error: null, checkEmail: true };
 
-  if (township) {
-    await supabase
-      .from("profiles")
-      .update({ township })
-      .eq("id", data.user?.id ?? "");
-  }
+  // A supporter funds the township from elsewhere, so they have a home city
+  // instead of a township.
+  await supabase
+    .from("profiles")
+    .update({
+      membership,
+      township: membership === "resident" ? township || "City of Elmina" : null,
+      home_city: membership === "supporter" ? homeCity || null : null,
+    })
+    .eq("id", data.user?.id ?? "");
 
   revalidatePath("/", "layout");
   redirect("/app");

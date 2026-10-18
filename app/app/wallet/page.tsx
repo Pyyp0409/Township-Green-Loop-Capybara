@@ -1,9 +1,10 @@
 import { createClient } from "@/lib/supabase/server";
 import { Card, Empty, Section, Stat } from "@/components/ui";
 import { CodeQR } from "@/components/qr";
-import { Disclaimer } from "@/lib/disclaimer";
 import { dayLabel, rm } from "@/lib/format";
 import { SpendForm } from "./spend-form";
+import { ConvertForm, PayoutPreferenceForm } from "./money-out";
+import { PAY_METHOD_LABEL } from "@/lib/payments";
 
 export const metadata = { title: "Wallet" };
 
@@ -11,13 +12,20 @@ const KIND_LABEL: Record<string, string> = {
   payout: "Payout",
   mall_spend: "Mall credit",
   withdrawal: "Withdrawal",
+  points_conversion: "Turned into points",
+  top_up: "Top up",
 };
 
 export default async function WalletPage() {
   const supabase = await createClient();
 
-  const [{ data: balance }, { data: transactions }, { data: malls }, { data: credits }] =
-    await Promise.all([
+  const [
+    { data: balance },
+    { data: transactions },
+    { data: malls },
+    { data: credits },
+    { data: pref },
+  ] = await Promise.all([
       supabase.rpc("my_wallet"),
       supabase
         .from("wallet_transactions")
@@ -29,6 +37,10 @@ export default async function WalletPage() {
         .from("mall_credits")
         .select("id, mall_id, wallet_amount, bonus, value, code, status, created_at")
         .order("created_at", { ascending: false }),
+      supabase
+        .from("payout_preferences")
+        .select("method, account_ref")
+        .maybeSingle(),
     ]);
 
   const mallName = new Map(
@@ -45,6 +57,11 @@ export default async function WalletPage() {
         <Stat
           label="Unused mall credits"
           value={rm(issued.reduce((sum, c) => sum + Number(c.value), 0))}
+          hint={
+            pref?.method
+              ? `Paid by ${PAY_METHOD_LABEL[pref.method as string] ?? pref.method}`
+              : undefined
+          }
         />
       </div>
 
@@ -52,6 +69,17 @@ export default async function WalletPage() {
         <SpendForm
           malls={(malls ?? []) as { id: number; name: string }[]}
           balance={Number(balance ?? 0)}
+        />
+      </Section>
+
+      <Section title="Turn money into points">
+        <ConvertForm balance={Number(balance ?? 0)} />
+      </Section>
+
+      <Section title="How you get paid">
+        <PayoutPreferenceForm
+          method={(pref?.method as string) ?? "bank_transfer"}
+          accountRef={(pref?.account_ref as string | null) ?? null}
         />
       </Section>
 
@@ -121,7 +149,6 @@ export default async function WalletPage() {
         )}
       </Section>
 
-      <Disclaimer className="mt-8" />
     </main>
   );
 }

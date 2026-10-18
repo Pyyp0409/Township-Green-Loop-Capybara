@@ -26,9 +26,10 @@ export default async function ProfilePage() {
       <Section title="Account">
         <Card>
           <p className="text-sm text-slate-600">{user?.email}</p>
-          <p className="mt-1 text-xs capitalize text-slate-500">
-            Role: {profile?.role.replace("_", " ")} — set by the township, not
-            editable here.
+          <p className="mt-1 text-xs text-slate-500">
+            {profile?.membership === "supporter"
+              ? `Supporter${profile?.home_city ? ` from ${profile.home_city}` : ""} — you fund this township from elsewhere, so activity check-ins stay with residents.`
+              : "Resident — you can join activities for points and spend at your malls."}
           </p>
           <div className="mt-3">
             <SignOutButton />

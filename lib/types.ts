@@ -1,10 +1,14 @@
 export type Role = "resident" | "merchant" | "developer_admin";
 
+export type Membership = "resident" | "supporter";
+
 export type Profile = {
   id: string;
   full_name: string | null;
   role: Role;
   township: string | null;
+  membership: Membership;
+  home_city: string | null;
 };
 
 /** Where each role lands after sign-in. */

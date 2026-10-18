@@ -1,8 +1,7 @@
 import Link from "next/link";
-import { FileText, Gift, MessageCircleQuestion, Receipt } from "lucide-react";
+import { FileText, Gift, Receipt, Users } from "lucide-react";
 import { createClient, getProfile } from "@/lib/supabase/server";
 import { Card, QuickAction, Section, Stat } from "@/components/ui";
-import { Disclaimer } from "@/lib/disclaimer";
 import { dayLabel, num, rm } from "@/lib/format";
 
 export const metadata = { title: "Home" };
@@ -105,28 +104,31 @@ export default async function ResidentHome() {
         <div className="grid grid-cols-4 gap-3">
           <QuickAction
             href="/app/bills"
+            tint="#EBCFFF"
             icon={<Receipt className="h-5 w-5" aria-hidden />}
             label="Bills"
           />
           <QuickAction
             href="/app/rewards"
+            tint="#FFE4ED"
             icon={<Gift className="h-5 w-5" aria-hidden />}
             label="Rewards"
           />
           <QuickAction
             href="/app/portfolio"
+            tint="#CBECFF"
             icon={<FileText className="h-5 w-5" aria-hidden />}
             label="Portfolio"
           />
           <QuickAction
-            href="/app/advisor"
-            icon={<MessageCircleQuestion className="h-5 w-5" aria-hidden />}
-            label="Advisor"
+            href="/community"
+            tint="#DDF1D1"
+            icon={<Users className="h-5 w-5" aria-hidden />}
+            label="Community"
           />
         </div>
       </Section>
 
-      <Disclaimer className="mt-8" />
     </main>
   );
 }

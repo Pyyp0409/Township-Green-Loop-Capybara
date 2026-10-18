@@ -18,7 +18,11 @@ const MORE_SECTIONS = [
   "/app/portfolio",
   "/app/bills",
   "/app/rewards",
-  "/app/advisor",
+  "/app/agent",
+  "/app/badges",
+  "/app/points-guide",
+  "/app/feedback",
+  "/app/risk",
   "/app/profile",
 ];
 

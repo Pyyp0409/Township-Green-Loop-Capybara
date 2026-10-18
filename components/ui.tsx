@@ -36,21 +36,32 @@ export function Card({
   );
 }
 
+/** The four tints a set of tiles cycles through, in order. */
+export const TILE_TINTS = ["#FFE4ED", "#CBECFF", "#EBCFFF", "#DDF1D1"];
+
 export function Stat({
   label,
   value,
   hint,
+  tint,
 }: {
   label: string;
   value: string;
   hint?: string;
+  /** Background colour, so a row of tiles reads as one set. */
+  tint?: string;
 }) {
   return (
-    <Card>
-      <div className="text-xl font-semibold text-brand-800">{value}</div>
-      <div className="mt-1 text-xs text-slate-500">{label}</div>
-      {hint ? <div className="mt-1 text-xs text-slate-400">{hint}</div> : null}
-    </Card>
+    <div
+      style={tint ? { backgroundColor: tint } : undefined}
+      className={`rounded-2xl p-4 shadow-sm ${
+        tint ? "ring-1 ring-black/5" : "bg-white ring-1 ring-slate-200"
+      }`}
+    >
+      <div className="tabular text-xl font-semibold text-brand-900">{value}</div>
+      <div className="mt-1 text-xs text-slate-600">{label}</div>
+      {hint ? <div className="mt-1 text-xs text-slate-500">{hint}</div> : null}
+    </div>
   );
 }
 
@@ -101,17 +112,21 @@ export function QuickAction({
   href,
   icon,
   label,
+  tint,
 }: {
   href: string;
   icon: React.ReactNode;
   label: string;
+  /** Background colour, so the four tiles read as a set. */
+  tint?: string;
 }) {
   return (
     <Link
       href={href}
-      className="flex flex-col items-center gap-2 rounded-2xl bg-white p-3 text-center shadow-sm ring-1 ring-slate-200"
+      style={tint ? { backgroundColor: tint } : undefined}
+      className="flex flex-col items-center gap-2 rounded-2xl p-3 text-center shadow-sm ring-1 ring-black/5"
     >
-      <span className="text-brand-700">{icon}</span>
+      <span className="text-slate-700">{icon}</span>
       <span className="text-xs font-medium text-slate-700">{label}</span>
     </Link>
   );

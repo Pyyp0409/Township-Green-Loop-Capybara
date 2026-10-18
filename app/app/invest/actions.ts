@@ -13,6 +13,8 @@ export async function invest(
   const assetId = String(formData.get("asset_id") ?? "");
   const amount = Number(formData.get("amount"));
   const acknowledged = formData.get("risk") === "on";
+  const payMethod = String(formData.get("pay_method") ?? "");
+  const payRef = String(formData.get("pay_ref") ?? "").trim();
 
   if (!poolId) return { error: "Pick a pool.", success: null };
   if (!assetId) return { error: "Pick an asset to fund.", success: null };
@@ -24,6 +26,9 @@ export async function invest(
       error: "Please read and tick the risk statement first.",
       success: null,
     };
+  }
+  if (!["card", "online_banking", "ewallet"].includes(payMethod)) {
+    return { error: "Choose how you want to pay.", success: null };
   }
 
   const supabase = await createClient();
@@ -47,6 +52,9 @@ export async function invest(
     pool_id: poolId,
     asset_id: Number(assetId),
     amount,
+    pay_method: payMethod,
+    // A label only — never a card number, CVV or bank credential.
+    pay_ref: payRef || null,
   });
 
   // The database trigger writes the min/max and RM50,000 messages; show them as-is.

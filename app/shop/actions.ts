@@ -23,3 +23,22 @@ export async function acceptCode(
   revalidatePath("/shop");
   return { error: null, message: String(data) };
 }
+
+export async function respondToPromotion(formData: FormData) {
+  const promotionId = Number(formData.get("promotion_id"));
+  const accept = formData.get("accept") === "true";
+  const note = String(formData.get("note") ?? "");
+  if (!Number.isFinite(promotionId)) return;
+
+  const supabase = await createClient();
+  // The database checks this shop is the one the proposal was sent to.
+  await supabase.rpc("respond_to_promotion", {
+    p_promotion_id: promotionId,
+    p_accept: accept,
+    p_note: note || null,
+  });
+
+  revalidatePath("/shop/promotions");
+  revalidatePath("/shop");
+  revalidatePath("/admin/promotions");
+}

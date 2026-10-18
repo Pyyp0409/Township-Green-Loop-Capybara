@@ -1,23 +1,46 @@
 "use client";
 
 import { useActionState } from "react";
-import { CheckCircle2, Loader2 } from "lucide-react";
-import { checkIn, type CheckInState } from "./actions";
+import { Clock, Loader2, ShieldCheck } from "lucide-react";
+import { requestCheckIn, type CheckInState } from "./actions";
 
-const initialState: CheckInState = { error: null, earned: null };
+const initialState: CheckInState = { error: null, submitted: false };
 
 export function CheckInForm({
   activities,
 }: {
   activities: { id: number; title: string; points: number }[];
 }) {
-  const [state, formAction, pending] = useActionState(checkIn, initialState);
+  const [state, formAction, pending] = useActionState(requestCheckIn, initialState);
+
+  if (state.submitted) {
+    return (
+      <div className="rounded-2xl bg-brand-50 p-4 ring-1 ring-brand-200">
+        <p className="inline-flex items-center gap-2 font-medium text-brand-800">
+          <Clock className="h-5 w-5" aria-hidden />
+          Sent to the township team
+        </p>
+        <p className="mt-1 text-sm text-brand-900">
+          An admin will check you were there and add the points. You can see the
+          status under &ldquo;My check-in requests&rdquo; below.
+        </p>
+      </div>
+    );
+  }
 
   return (
     <form
       action={formAction}
       className="rounded-2xl bg-white p-4 shadow-sm ring-1 ring-slate-200"
     >
+      <p className="mb-3 flex gap-2.5 rounded-xl bg-slate-50 p-3 text-xs leading-relaxed text-slate-600">
+        <ShieldCheck className="mt-0.5 h-4 w-4 shrink-0 text-brand-600" aria-hidden />
+        <span>
+          Points are added after a township admin confirms you took part. This
+          keeps it fair — a code alone is not enough, because codes can be shared.
+        </span>
+      </p>
+
       <label className="block">
         <span className="text-sm font-medium text-slate-700">Activity</span>
         <select
@@ -34,24 +57,31 @@ export function CheckInForm({
       </label>
 
       <label className="mt-3 block">
-        <span className="text-sm font-medium text-slate-700">Check-in code</span>
+        <span className="text-sm font-medium text-slate-700">
+          Code from the poster
+        </span>
         <input
           name="code"
           type="text"
           autoCapitalize="characters"
           autoComplete="off"
-          required
-          placeholder="From the QR poster at the activity"
+          placeholder="Optional, but it helps"
           className="mt-1 w-full rounded-xl border border-slate-300 px-3 py-3 text-base uppercase tracking-widest outline-none focus:border-brand-600 focus:ring-2 focus:ring-brand-200"
         />
       </label>
 
-      {state.earned !== null ? (
-        <p className="mt-3 inline-flex items-center gap-2 rounded-xl bg-brand-50 px-3 py-2 text-sm font-medium text-brand-800">
-          <CheckCircle2 className="h-4 w-4" aria-hidden />
-          Checked in — you earned {state.earned} points.
-        </p>
-      ) : null}
+      <label className="mt-3 block">
+        <span className="text-sm font-medium text-slate-700">
+          Anything to add?
+        </span>
+        <textarea
+          name="note"
+          rows={2}
+          maxLength={300}
+          placeholder="What you did, who you came with…"
+          className="mt-1 w-full resize-y rounded-xl border border-slate-300 px-3 py-2.5 text-base outline-none focus:border-brand-600 focus:ring-2 focus:ring-brand-200"
+        />
+      </label>
 
       {state.error ? (
         <p
@@ -68,7 +98,7 @@ export function CheckInForm({
         className="mt-4 inline-flex w-full items-center justify-center gap-2 rounded-xl bg-brand-700 px-4 py-3 font-medium text-white disabled:opacity-60"
       >
         {pending ? <Loader2 className="h-4 w-4 animate-spin" aria-hidden /> : null}
-        Check in
+        Ask to check in
       </button>
     </form>
   );

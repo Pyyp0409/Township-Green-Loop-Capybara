@@ -2,7 +2,6 @@ import Link from "next/link";
 import { ArrowRight, Leaf, Sun, Store, Zap } from "lucide-react";
 import { createClient, getProfile, homeFor } from "@/lib/supabase/server";
 import { num, pct, rm } from "@/lib/format";
-import { Disclaimer } from "@/lib/disclaimer";
 import type { Pool, TownshipImpact } from "@/lib/types";
 
 const POOL_ICON: Record<string, React.ReactNode> = {
@@ -86,8 +85,9 @@ export default async function LandingPage() {
       </h1>
       <p className="mt-3 text-slate-600">
         Put as little as RM100 into rooftop solar, mall shop energy upgrades or EV
-        charging. Get monthly payouts in ringgit, points for recycling and lower
-        bills — and watch the township&apos;s carbon drop.
+        charging. Live here and you also earn points for recycling and lower
+        bills. Live elsewhere and you can still fund the township&apos;s solar —
+        and watch its carbon drop.
       </p>
 
       <section aria-label="Township impact" className="mt-8 grid grid-cols-2 gap-3">
@@ -185,7 +185,6 @@ export default async function LandingPage() {
         </p>
       )}
 
-      <Disclaimer className="mt-8" />
     </main>
   );
 }

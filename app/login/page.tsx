@@ -28,7 +28,8 @@ export default async function LoginPage({
 
       <h1 className="mt-10 text-2xl font-bold text-slate-900">Sign in</h1>
       <p className="mt-2 text-sm text-slate-600">
-        Use your township account. You will land on the right screen for your role.
+        You land on the right screen for your role. Judging this? Pick an account
+        below and the form fills itself.
       </p>
 
       <LoginForm next={next ?? ""} />
@@ -40,20 +41,6 @@ export default async function LoginPage({
         </Link>
       </p>
 
-      <div className="mt-6 rounded-2xl bg-white p-4 text-sm shadow-sm ring-1 ring-slate-200">
-        <p className="font-medium text-slate-800">Demo accounts</p>
-        <ul className="mt-2 space-y-1 text-slate-600">
-          <li>
-            <code>resident@demo.com</code> — resident
-          </li>
-          <li>
-            <code>shop@demo.com</code> — merchant (Kopi Hijau Café)
-          </li>
-          <li>
-            <code>admin@demo.com</code> — developer admin
-          </li>
-        </ul>
-      </div>
     </main>
   );
 }

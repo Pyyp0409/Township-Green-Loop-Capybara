@@ -1,14 +1,17 @@
 import Link from "next/link";
 import {
+  Award,
   ChevronRight,
   FileText,
   Gift,
-  MessageCircleQuestion,
+  MessageSquareHeart,
   Receipt,
+  ShieldCheck,
+  Sparkles,
+  Users,
   UserRound,
 } from "lucide-react";
 import { Card } from "@/components/ui";
-import { Disclaimer } from "@/lib/disclaimer";
 
 export const metadata = { title: "More" };
 
@@ -32,10 +35,34 @@ const LINKS = [
     icon: Gift,
   },
   {
-    href: "/app/advisor",
-    label: "Green advisor",
-    hint: "Ask about your own pools and bills",
-    icon: MessageCircleQuestion,
+    href: "/app/agent",
+    label: "Ask Sprout",
+    hint: "Your helper for everything in the app",
+    icon: Sparkles,
+  },
+  {
+    href: "/community",
+    label: "Community",
+    hint: "Talk to neighbours, shops and the township team",
+    icon: Users,
+  },
+  {
+    href: "/app/badges",
+    label: "My badges",
+    hint: "Your level and the next one to reach",
+    icon: Award,
+  },
+  {
+    href: "/app/risk",
+    label: "How we handle risk",
+    hint: "Where your money goes, and who carries the risk",
+    icon: ShieldCheck,
+  },
+  {
+    href: "/app/feedback",
+    label: "Give feedback",
+    hint: "Tell the township team what to improve",
+    icon: MessageSquareHeart,
   },
   {
     href: "/app/profile",
@@ -69,7 +96,6 @@ export default function MorePage() {
         ))}
       </div>
 
-      <Disclaimer className="mt-8" />
     </main>
   );
 }

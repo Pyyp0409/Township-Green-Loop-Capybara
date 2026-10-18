@@ -1,5 +1,5 @@
 /**
- * Resident-facing figures taken from Township_Green_Loop_Business_Plan_v3.xlsx,
+ * Resident-facing figures taken from Township_Green_Loop_Business_Plan_Final.xlsx,
  * sheet "Investor_View". They are proportional to the amount invested: the
  * return % is identical at the minimum and the maximum, only the ringgit
  * changes, so one multiplier per pool reproduces the sheet exactly.
@@ -34,6 +34,7 @@ export const POOL_PLAN: Record<string, PoolPlan> = {
       "You are a funder, not a roof landlord. The developer/JV owns and runs the panels.",
       "Tenants, malls and factories pay for the power, and residents' payouts are paid first.",
       "Contract rate 5% a year with a 4.5% floor, repaid monthly over 5 years.",
+      "Most you can hold in this pool: RM2,000.",
       "Different from SDP's CREAM roof-leasing project in Elmina.",
     ],
   },
@@ -48,6 +49,7 @@ export const POOL_PLAN: Record<string, PoolPlan> = {
     facts: [
       "Efficient air-con, fridges and LED for mall shops, repaid from 80% of the bill savings.",
       "The installer contract guarantees a minimum saving of RM800 per shop a month.",
+      "Most you can hold in this pool: RM1,000.",
       "Totals are already after expected shop defaults and the bad-debt reserve.",
       "If a shop closes you can lose part of your money; a reserve and the guarantee reduce this.",
     ],
@@ -65,13 +67,17 @@ export const POOL_PLAN: Record<string, PoolPlan> = {
       "Payouts come only from charging profit — there is no fixed rate.",
       "The developer and platform take their 10% shares only after residents get their money back.",
       "If usage falls below 60 kWh a day, partners top up, capped at RM3,000 per charger a year.",
+      "Most you can hold in this pool: RM500 — the tightest cap of the three.",
       "Price wars, cost rises and a refused government grant are NOT covered.",
     ],
   },
 };
 
-/** Most one resident may hold across all three pools at once (100+5000+3000+1000 maxima). */
-export const MAX_ACROSS_POOLS = 9000;
+/** Most one resident may hold across all three pools at once (2,000 + 1,000 + 500). */
+export const MAX_ACROSS_POOLS = 3500;
 
 /** The retail limit the database enforces on a rolling 12 months. */
 export const YEARLY_RETAIL_LIMIT = 50000;
+
+/** The other half of the retail limit: per issuer, not per year. */
+export const PER_ISSUER_LIMIT = 10000;

@@ -6,7 +6,6 @@ import {
   AllocationChart,
   type AllocationSlice,
 } from "@/components/charts/allocation-chart";
-import { Disclaimer } from "@/lib/disclaimer";
 import { dayLabel, monthLabel, rm } from "@/lib/format";
 
 export const metadata = { title: "Portfolio" };
@@ -170,7 +169,6 @@ export default async function PortfolioPage() {
         )}
       </Section>
 
-      <Disclaimer className="mt-8" />
     </main>
   );
 }

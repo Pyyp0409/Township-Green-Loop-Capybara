@@ -1,8 +1,7 @@
 import Link from "next/link";
-import { ArrowRight } from "lucide-react";
+import { ArrowRight, ShieldCheck } from "lucide-react";
 import { createClient } from "@/lib/supabase/server";
 import { Card, RiskBadge } from "@/components/ui";
-import { Disclaimer } from "@/lib/disclaimer";
 import { pct, rm } from "@/lib/format";
 import type { Pool } from "@/lib/types";
 
@@ -60,7 +59,27 @@ export default async function InvestPage() {
         ))}
       </div>
 
-      <Disclaimer className="mt-8" />
+      <Link href="/app/risk" className="mt-4 block">
+        <Card className="flex items-start gap-3 ring-brand-200">
+          <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-brand-50 text-brand-700">
+            <ShieldCheck className="h-4.5 w-4.5" aria-hidden />
+          </span>
+          <span className="min-w-0 flex-1">
+            <span className="block text-sm font-semibold text-slate-900">
+              Risk management
+            </span>
+            <span className="mt-0.5 block text-xs leading-relaxed text-slate-600">
+              Where your money goes, who holds it, who pays it back, and what is
+              not covered. The whole chain, in the open.
+            </span>
+            <span className="mt-1.5 inline-flex items-center gap-1 text-sm font-medium text-brand-700">
+              Read before you invest
+              <ArrowRight className="h-4 w-4" aria-hidden />
+            </span>
+          </span>
+        </Card>
+      </Link>
+
     </main>
   );
 }

@@ -1,15 +1,76 @@
 import Link from "next/link";
 import { redirect } from "next/navigation";
-import { CalendarDays, ChevronRight, Gift } from "lucide-react";
+import {
+  BadgeCheck,
+  CalendarDays,
+  ChevronRight,
+  Gift,
+  FileSpreadsheet,
+  MessageSquareHeart,
+  LineChart,
+  Tag,
+  Users,
+  UsersRound,
+} from "lucide-react";
 import { createClient, getProfile } from "@/lib/supabase/server";
-import { Card, Empty, Progress, Section, Stat } from "@/components/ui";
+import { Card, Empty, Progress, Section, Stat, TILE_TINTS } from "@/components/ui";
 import { PoolChart, type PoolSlice } from "@/components/charts/pool-chart";
 import { RoleShell } from "@/app/role-shell";
-import { Disclaimer } from "@/lib/disclaimer";
 import { num, rm } from "@/lib/format";
 import { PayoutButton } from "./payout-button";
 
 export const metadata = { title: "Admin" };
+
+const MANAGE = [
+  {
+    href: "/admin/checkins",
+    label: "Check-in requests",
+    hint: "Confirm who really took part, then release the points",
+    icon: BadgeCheck,
+  },
+  {
+    href: "/admin/activities",
+    label: "Activities",
+    hint: "Check-in codes and printable QR posters",
+    icon: CalendarDays,
+  },
+  {
+    href: "/admin/promotions",
+    label: "Promotions",
+    hint: "Propose offers; the shop has to agree first",
+    icon: Tag,
+  },
+  {
+    href: "/admin/rewards",
+    label: "Rewards",
+    hint: "Catalogue, stock and availability",
+    icon: Gift,
+  },
+  {
+    href: "/admin/residents",
+    label: "Residents and levels",
+    hint: "Who sits at which badge, and what they have invested",
+    icon: UsersRound,
+  },
+  {
+    href: "/admin/community",
+    label: "Community",
+    hint: "Reports, hiding posts and announcements",
+    icon: Users,
+  },
+  {
+    href: "/admin/feedback",
+    label: "Feedback",
+    hint: "Ratings by area, reply and pass it on",
+    icon: MessageSquareHeart,
+  },
+  {
+    href: "/admin/reports",
+    label: "Reports",
+    hint: "Download investments, points, impact and feedback as CSV",
+    icon: FileSpreadsheet,
+  },
+];
 
 type Overview = {
   residents: number;
@@ -72,14 +133,54 @@ export default async function AdminHome() {
         </Card>
       ) : (
         <div className="mt-5 grid grid-cols-2 gap-3">
-          <Stat label="Residents" value={num(overview?.residents ?? 0)} />
-          <Stat label="Investors" value={num(overview?.investors ?? 0)} />
-          <Stat label="Paid out" value={rm(overview?.paid_out ?? 0)} />
-          <Stat label="Points issued" value={num(overview?.points_issued ?? 0)} />
-          <Stat label="Mall credits" value={rm(overview?.mall_credits_value ?? 0)} />
-          <Stat label="tCO₂e / year" value={num(overview?.co2_t_per_year ?? 0, 1)} />
+          {[
+            // The two headcounts stay white; the four money and impact tiles
+            // carry the pastels, so the eye goes to the numbers that move.
+            { label: "Residents", value: num(overview?.residents ?? 0) },
+            { label: "Investors", value: num(overview?.investors ?? 0) },
+            { label: "Paid out", value: rm(overview?.paid_out ?? 0), tinted: true },
+            {
+              label: "Points issued",
+              value: num(overview?.points_issued ?? 0),
+              tinted: true,
+            },
+            {
+              label: "Mall credits",
+              value: rm(overview?.mall_credits_value ?? 0),
+              tinted: true,
+            },
+            {
+              label: "tCO₂e / year",
+              value: num(overview?.co2_t_per_year ?? 0, 1),
+              tinted: true,
+            },
+          ].map((tile, index) => (
+            <Stat
+              key={tile.label}
+              label={tile.label}
+              value={tile.value}
+              tint={tile.tinted ? TILE_TINTS[(index - 2) % TILE_TINTS.length] : undefined}
+            />
+          ))}
         </div>
       )}
+
+      <Link href="/admin/trends" className="mt-6 block">
+        <Card className="flex items-center gap-3 ring-brand-200">
+          <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-brand-50 text-brand-700">
+            <LineChart className="h-4.5 w-4.5" aria-hidden />
+          </span>
+          <span className="min-w-0 flex-1">
+            <span className="block text-sm font-semibold text-slate-900">
+              Overview details
+            </span>
+            <span className="block text-xs text-slate-500">
+              Twelve months of investor, pool, payout and points trends
+            </span>
+          </span>
+          <ChevronRight className="h-4 w-4 shrink-0 text-slate-400" aria-hidden />
+        </Card>
+      </Link>
 
       <Section title="Raised by pool">
         {poolSlices.length > 0 ? (
@@ -129,38 +230,23 @@ export default async function AdminHome() {
 
       <Section title="Manage">
         <div className="space-y-3">
-          <Link href="/admin/activities" className="block">
-            <Card className="flex items-center gap-3">
-              <CalendarDays className="h-5 w-5 text-brand-700" aria-hidden />
-              <span className="min-w-0 flex-1">
-                <span className="block text-sm font-medium text-slate-900">
-                  Activities
+          {MANAGE.map(({ href, label, hint, icon: Icon }) => (
+            <Link key={href} href={href} className="block">
+              <Card className="flex items-center gap-3">
+                <Icon className="h-5 w-5 shrink-0 text-brand-700" aria-hidden />
+                <span className="min-w-0 flex-1">
+                  <span className="block text-sm font-medium text-slate-900">
+                    {label}
+                  </span>
+                  <span className="block text-xs text-slate-500">{hint}</span>
                 </span>
-                <span className="block text-xs text-slate-500">
-                  Check-in codes and printable QR posters
-                </span>
-              </span>
-              <ChevronRight className="h-4 w-4 shrink-0 text-slate-400" aria-hidden />
-            </Card>
-          </Link>
-          <Link href="/admin/rewards" className="block">
-            <Card className="flex items-center gap-3">
-              <Gift className="h-5 w-5 text-brand-700" aria-hidden />
-              <span className="min-w-0 flex-1">
-                <span className="block text-sm font-medium text-slate-900">
-                  Rewards
-                </span>
-                <span className="block text-xs text-slate-500">
-                  Catalogue, stock and availability
-                </span>
-              </span>
-              <ChevronRight className="h-4 w-4 shrink-0 text-slate-400" aria-hidden />
-            </Card>
-          </Link>
+                <ChevronRight className="h-4 w-4 shrink-0 text-slate-400" aria-hidden />
+              </Card>
+            </Link>
+          ))}
         </div>
       </Section>
 
-      <Disclaimer className="mt-8" />
     </RoleShell>
   );
 }

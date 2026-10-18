@@ -1,6 +1,6 @@
 "use client";
 
-import { useActionState } from "react";
+import { useActionState, useState } from "react";
 import { Loader2, MailCheck } from "lucide-react";
 import { signUp, type SignUpState } from "./actions";
 
@@ -8,6 +8,7 @@ const initialState: SignUpState = { error: null, checkEmail: false };
 
 export function SignUpForm() {
   const [state, formAction, pending] = useActionState(signUp, initialState);
+  const [membership, setMembership] = useState("resident");
 
   if (state.checkEmail) {
     return (
@@ -68,15 +69,73 @@ export function SignUpForm() {
         </span>
       </label>
 
-      <label className="block">
-        <span className="text-sm font-medium text-slate-700">Township</span>
-        <input
-          name="township"
-          type="text"
-          defaultValue="City of Elmina"
-          className="mt-1 w-full rounded-xl border border-slate-300 px-3 py-3 text-base outline-none focus:border-brand-600 focus:ring-2 focus:ring-brand-200"
-        />
-      </label>
+      <fieldset>
+        <legend className="text-sm font-medium text-slate-700">
+          Do you live in the township?
+        </legend>
+        <div className="mt-2 space-y-2">
+          <label className="flex items-start gap-3 rounded-xl border border-slate-300 p-3 has-[:checked]:border-brand-600 has-[:checked]:bg-brand-50">
+            <input
+              type="radio"
+              name="membership"
+              value="resident"
+              checked={membership === "resident"}
+              onChange={(e) => setMembership(e.target.value)}
+              className="mt-1 h-4 w-4 accent-brand-700"
+            />
+            <span>
+              <span className="block text-sm font-medium text-slate-900">
+                Yes, I live here
+              </span>
+              <span className="block text-xs text-slate-500">
+                Invest, join activities for points, and spend at your malls.
+              </span>
+            </span>
+          </label>
+
+          <label className="flex items-start gap-3 rounded-xl border border-slate-300 p-3 has-[:checked]:border-brand-600 has-[:checked]:bg-brand-50">
+            <input
+              type="radio"
+              name="membership"
+              value="supporter"
+              checked={membership === "supporter"}
+              onChange={(e) => setMembership(e.target.value)}
+              className="mt-1 h-4 w-4 accent-brand-700"
+            />
+            <span>
+              <span className="block text-sm font-medium text-slate-900">
+                No, I want to support this township
+              </span>
+              <span className="block text-xs text-slate-500">
+                Invest and earn the same returns. Activity points need you to be
+                there in person, so those stay with residents.
+              </span>
+            </span>
+          </label>
+        </div>
+      </fieldset>
+
+      {membership === "resident" ? (
+        <label className="block">
+          <span className="text-sm font-medium text-slate-700">Township</span>
+          <input
+            name="township"
+            type="text"
+            defaultValue="City of Elmina"
+            className="mt-1 w-full rounded-xl border border-slate-300 px-3 py-3 text-base outline-none focus:border-brand-600 focus:ring-2 focus:ring-brand-200"
+          />
+        </label>
+      ) : (
+        <label className="block">
+          <span className="text-sm font-medium text-slate-700">Where you live</span>
+          <input
+            name="home_city"
+            type="text"
+            placeholder="Penang"
+            className="mt-1 w-full rounded-xl border border-slate-300 px-3 py-3 text-base outline-none focus:border-brand-600 focus:ring-2 focus:ring-brand-200"
+          />
+        </label>
+      )}
 
       {state.error ? (
         <p
@@ -97,8 +156,7 @@ export function SignUpForm() {
       </button>
 
       <p className="text-xs leading-relaxed text-slate-500">
-        New accounts join as residents. Merchant and admin roles are assigned by
-        the township.
+        Merchant and admin accounts are set up by the township, not here.
       </p>
     </form>
   );

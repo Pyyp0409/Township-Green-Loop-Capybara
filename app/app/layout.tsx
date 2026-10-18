@@ -4,6 +4,8 @@ import { Leaf } from "lucide-react";
 import { getProfile } from "@/lib/supabase/server";
 import { SignOutButton } from "@/app/sign-out-button";
 import { TabBar } from "@/components/tab-bar";
+import { Celebration } from "@/components/celebration";
+import { SproutBubble } from "@/components/sprout-bubble";
 
 export default async function ResidentLayout({
   children,
@@ -29,6 +31,8 @@ export default async function ResidentLayout({
       </header>
       {children}
       <TabBar />
+      <SproutBubble />
+      <Celebration />
     </div>
   );
 }

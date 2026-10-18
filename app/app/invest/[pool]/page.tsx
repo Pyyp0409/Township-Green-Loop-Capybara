@@ -3,8 +3,7 @@ import { notFound } from "next/navigation";
 import { ArrowLeft } from "lucide-react";
 import { createClient } from "@/lib/supabase/server";
 import { Card, Progress, RiskBadge, Section } from "@/components/ui";
-import { CheckCircle2, Info } from "lucide-react";
-import { Disclaimer } from "@/lib/disclaimer";
+import { CheckCircle2, Info, Users } from "lucide-react";
 import { num, pct, rm } from "@/lib/format";
 import type { Pool } from "@/lib/types";
 import { MAX_ACROSS_POOLS, POOL_PLAN, YEARLY_RETAIL_LIMIT } from "@/lib/plan";
@@ -64,12 +63,19 @@ export default async function PoolDetailPage({
   }
 
   const assets = assetData ?? [];
-  // Only assets still raising can take new money.
+  // Anything not yet repaid can still take money — a running asset is already
+  // producing, so residents may want that one rather than one still raising.
   const choices: AssetChoice[] = assets
-    .filter((a) => a.status === "raising")
+    .filter((a) => a.status !== "repaid")
     .map((a) => ({
       id: a.id,
       name: a.name,
+      status: a.status as string,
+      // Your share of this asset's yearly carbon = your stake / its target.
+      co2PerRm:
+        Number(a.funding_target) > 0
+          ? Number(a.co2_t_per_year ?? 0) / Number(a.funding_target)
+          : 0,
       remaining: Math.max(
         0,
         Number(a.funding_target) - (raisedFor.get(a.id)?.raised ?? 0),
@@ -128,7 +134,15 @@ export default async function PoolDetailPage({
                 </li>
               ))}
             </ul>
-            <p className="mt-3 flex gap-2.5 rounded-xl bg-slate-50 p-3 text-xs leading-relaxed text-slate-600">
+            <p className="mt-3 flex gap-2.5 rounded-xl bg-brand-50 p-3 text-xs leading-relaxed text-brand-900">
+              <Users className="mt-0.5 h-4 w-4 shrink-0 text-brand-600" aria-hidden />
+              <span>
+                Residents get first priority for the first 14 days of every raise,
+                and hold at least 70% of this pool. Supporters can fund whatever
+                is left.
+              </span>
+            </p>
+            <p className="mt-2 flex gap-2.5 rounded-xl bg-slate-50 p-3 text-xs leading-relaxed text-slate-600">
               <Info className="mt-0.5 h-4 w-4 shrink-0 text-slate-400" aria-hidden />
               <span>
                 Money is paid back over {plan.paybackLabel}. Across all three pools
@@ -195,13 +209,12 @@ export default async function PoolDetailPage({
           />
         ) : (
           <Card className="text-sm text-slate-500">
-            Every asset in this pool is fully funded. Check back when the next one
+            Every asset in this pool has been repaid. Check back when the next one
             opens.
           </Card>
         )}
       </Section>
 
-      <Disclaimer className="mt-8" />
     </main>
   );
 }

@@ -1,15 +1,19 @@
 "use client";
 
-import { useActionState } from "react";
+import { useActionState, useState } from "react";
 import { Loader2 } from "lucide-react";
 import { signIn, type LoginState } from "./actions";
+import { DemoAccounts } from "./demo-accounts";
 
 const initialState: LoginState = { error: null };
 
 export function LoginForm({ next }: { next: string }) {
   const [state, formAction, pending] = useActionState(signIn, initialState);
+  const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
 
   return (
+    <>
     <form action={formAction} className="mt-8 space-y-4">
       <input type="hidden" name="next" value={next} />
 
@@ -20,8 +24,10 @@ export function LoginForm({ next }: { next: string }) {
           type="email"
           autoComplete="email"
           required
+          value={email}
+          onChange={(e) => setEmail(e.target.value)}
           className="mt-1 w-full rounded-xl border border-slate-300 px-3 py-3 text-base outline-none focus:border-brand-600 focus:ring-2 focus:ring-brand-200"
-          placeholder="resident@demo.com"
+          placeholder="zara@demo.com"
         />
       </label>
 
@@ -32,6 +38,8 @@ export function LoginForm({ next }: { next: string }) {
           type="password"
           autoComplete="current-password"
           required
+          value={password}
+          onChange={(e) => setPassword(e.target.value)}
           className="mt-1 w-full rounded-xl border border-slate-300 px-3 py-3 text-base outline-none focus:border-brand-600 focus:ring-2 focus:ring-brand-200"
         />
       </label>
@@ -54,5 +62,13 @@ export function LoginForm({ next }: { next: string }) {
         Sign in
       </button>
     </form>
+
+    <DemoAccounts
+      onPick={(chosen) => {
+        setEmail(chosen);
+        setPassword("123456");
+      }}
+    />
+    </>
   );
 }

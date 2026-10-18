@@ -3,31 +3,34 @@
 import { revalidatePath } from "next/cache";
 import { createClient } from "@/lib/supabase/server";
 
-export type CheckInState = { error: string | null; earned: number | null };
+export type CheckInState = { error: string | null; submitted: boolean };
 
-export async function checkIn(
+/**
+ * A poster code can be photographed and passed around, so it no longer awards
+ * points by itself. The resident asks, and an admin confirms attendance.
+ */
+export async function requestCheckIn(
   _prev: CheckInState,
   formData: FormData,
 ): Promise<CheckInState> {
   const activityId = Number(formData.get("activity_id"));
   const code = String(formData.get("code") ?? "").trim();
+  const note = String(formData.get("note") ?? "").trim();
 
   if (!Number.isFinite(activityId) || activityId <= 0) {
-    return { error: "Pick an activity.", earned: null };
-  }
-  if (!code) {
-    return { error: "Enter the code from the poster at the activity.", earned: null };
+    return { error: "Pick an activity.", submitted: false };
   }
 
   const supabase = await createClient();
-  const { data, error } = await supabase.rpc("check_in", {
+  const { error } = await supabase.rpc("request_checkin", {
     p_activity_id: activityId,
-    p_code: code,
+    p_code: code || null,
+    p_note: note || null,
   });
 
-  // "Wrong check-in code" / "already checked in" come from the database.
-  if (error) return { error: error.message, earned: null };
+  // "already asked" / "already received points" come from the database.
+  if (error) return { error: error.message, submitted: false };
 
-  revalidatePath("/app", "layout");
-  return { error: null, earned: Number(data) };
+  revalidatePath("/app/points");
+  return { error: null, submitted: true };
 }

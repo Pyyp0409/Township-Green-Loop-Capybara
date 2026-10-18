@@ -1,18 +1,21 @@
 "use client";
 
 import { useRef, useState } from "react";
+import Image from "next/image";
 import { Loader2, Send } from "lucide-react";
+import { streamAgent } from "@/lib/stream-agent";
 
 type Turn = { role: "user" | "model"; text: string };
 
 const SUGGESTED = [
-  "Which pool suits RM1,000 and low risk?",
   "How do I earn more points?",
+  "Which pool suits RM1,000 and low risk?",
+  "How do I get my next badge?",
   "What happens to my money in the EV pool?",
-  "How much could RM500 in solar pay me?",
+  "How does the mall credit bonus work?",
 ];
 
-export function Chat() {
+export function Chat({ firstName }: { firstName: string }) {
   const [turns, setTurns] = useState<Turn[]>([]);
   const [input, setInput] = useState("");
   const [pending, setPending] = useState(false);
@@ -29,21 +32,22 @@ export function Chat() {
     setTurns([...history, { role: "user", text }]);
     setPending(true);
 
-    try {
-      const response = await fetch("/api/advisor", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ message: text, history }),
-      });
-      const data = await response.json();
+    // An empty model turn goes in first, then fills as the stream arrives.
+    setTurns((current) => [...current, { role: "model", text: "" }]);
 
-      if (!response.ok) {
-        setError(data.error ?? "Something went wrong.");
-        return;
-      }
-      setTurns((current) => [...current, { role: "model", text: data.reply }]);
-    } catch {
-      setError("Could not reach the advisor. Check your connection.");
+    try {
+      await streamAgent(text, history, (soFar) => {
+        setTurns((current) => {
+          const next = [...current];
+          next[next.length - 1] = { role: "model", text: soFar };
+          return next;
+        });
+      });
+    } catch (e) {
+      setTurns((current) => current.slice(0, -1));
+      setError(
+        e instanceof Error ? e.message : "Could not reach Sprout. Check your connection.",
+      );
     } finally {
       setPending(false);
       requestAnimationFrame(() =>
@@ -56,11 +60,16 @@ export function Chat() {
     <div className="mt-5">
       {turns.length === 0 ? (
         <div className="rounded-2xl bg-white p-4 shadow-sm ring-1 ring-slate-200">
-          <p className="text-sm text-slate-600">
-            Ask about the three pools, your own investments, your points or your
-            electricity bills. I only see your own data.
-          </p>
-          <div className="mt-3 flex flex-wrap gap-2">
+          <div className="flex items-start gap-3">
+            <Sprout size={52} />
+            <p className="text-sm text-slate-600">
+              Hello {firstName}. I am Sprout. Ask me anything about the app —
+              investing, points, your bills, rewards or badges. I only ever see
+              your own numbers.
+            </p>
+          </div>
+
+          <div className="mt-4 flex flex-wrap gap-2">
             {SUGGESTED.map((question) => (
               <button
                 key={question}
@@ -75,26 +84,26 @@ export function Chat() {
         </div>
       ) : (
         <div className="space-y-3">
-          {turns.map((turn, index) => (
-            <div
-              key={index}
-              className={
-                turn.role === "user" ? "flex justify-end" : "flex justify-start"
-              }
-            >
-              <p
-                className={`max-w-[85%] whitespace-pre-wrap rounded-2xl px-3.5 py-2.5 text-sm ${
-                  turn.role === "user"
-                    ? "bg-brand-700 text-white"
-                    : "bg-white text-slate-800 shadow-sm ring-1 ring-slate-200"
-                }`}
-              >
-                {turn.text}
-              </p>
-            </div>
-          ))}
-          {pending ? (
-            <div className="flex justify-start">
+          {turns.map((turn, index) =>
+            turn.role === "model" && turn.text === "" ? null : turn.role === "user" ? (
+              <div key={index} className="flex justify-end">
+                <p className="max-w-[85%] whitespace-pre-wrap rounded-2xl bg-brand-700 px-3.5 py-2.5 text-sm text-white">
+                  {turn.text}
+                </p>
+              </div>
+            ) : (
+              <div key={index} className="flex items-start gap-2">
+                <Sprout size={32} />
+                <p className="max-w-[85%] whitespace-pre-wrap rounded-2xl bg-white px-3.5 py-2.5 text-sm text-slate-800 shadow-sm ring-1 ring-slate-200">
+                  {turn.text}
+                </p>
+              </div>
+            ),
+          )}
+
+          {pending && !turns[turns.length - 1]?.text ? (
+            <div className="flex items-center gap-2">
+              <Sprout size={32} />
               <p className="inline-flex items-center gap-2 rounded-2xl bg-white px-3.5 py-2.5 text-sm text-slate-500 shadow-sm ring-1 ring-slate-200">
                 <Loader2 className="h-4 w-4 animate-spin" aria-hidden />
                 Thinking
@@ -124,7 +133,7 @@ export function Chat() {
         <input
           value={input}
           onChange={(e) => setInput(e.target.value)}
-          placeholder="Ask a question"
+          placeholder="Ask Sprout anything"
           className="min-w-0 flex-1 rounded-xl border border-slate-300 px-3 py-3 text-base outline-none focus:border-brand-600 focus:ring-2 focus:ring-brand-200"
         />
         <button
@@ -137,5 +146,18 @@ export function Chat() {
         </button>
       </form>
     </div>
+  );
+}
+
+function Sprout({ size }: { size: number }) {
+  return (
+    <Image
+      src="/agent/agent.jpg"
+      alt="Sprout"
+      width={size}
+      height={size}
+      className="shrink-0 rounded-full bg-amber-50"
+      priority
+    />
   );
 }

@@ -28,7 +28,7 @@ export function AcceptForm() {
           autoComplete="off"
           autoFocus
           required
-          placeholder="8 characters from their QR"
+          placeholder="Enter the customer code"
           className="mt-1 w-full rounded-xl border border-slate-300 px-3 py-3 text-lg uppercase tracking-widest outline-none focus:border-brand-600 focus:ring-2 focus:ring-brand-200"
         />
         <span className="mt-1 block text-xs text-slate-500">

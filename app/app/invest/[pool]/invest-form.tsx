@@ -5,6 +5,7 @@ import { CheckCircle2, Loader2 } from "lucide-react";
 import { invest, type InvestState } from "../actions";
 import { rm } from "@/lib/format";
 import { POOL_PLAN } from "@/lib/plan";
+import { PAY_METHODS } from "@/lib/payments";
 import { OutcomeTable } from "./outcome-table";
 
 const initialState: InvestState = { error: null, success: null };
@@ -12,7 +13,10 @@ const initialState: InvestState = { error: null, success: null };
 export type AssetChoice = {
   id: number;
   name: string;
+  status: string;
   remaining: number;
+  /** tCO2e avoided a year, per RM1 invested in this asset. */
+  co2PerRm: number;
 };
 
 export function InvestForm({
@@ -34,6 +38,10 @@ export function InvestForm({
 }) {
   const [state, formAction, pending] = useActionState(invest, initialState);
   const [amount, setAmount] = useState<string>(String(minInvest));
+  const [method, setMethod] = useState<string>(PAY_METHODS[0].value);
+  const [assetId, setAssetId] = useState<number>(assets[0]?.id ?? 0);
+
+  const chosen = PAY_METHODS.find((m) => m.value === method) ?? PAY_METHODS[0];
 
   const parsed = Number(amount);
   const plan = POOL_PLAN[poolId];
@@ -75,15 +83,29 @@ export function InvestForm({
                 name="asset_id"
                 value={asset.id}
                 defaultChecked={index === 0}
+                onChange={() => setAssetId(asset.id)}
                 className="mt-1 h-4 w-4 accent-brand-700"
                 required
               />
-              <span>
-                <span className="block text-sm font-medium text-slate-900">
-                  {asset.name}
+              <span className="min-w-0">
+                <span className="flex flex-wrap items-center gap-2">
+                  <span className="text-sm font-medium text-slate-900">
+                    {asset.name}
+                  </span>
+                  <span
+                    className={`rounded-full px-2 py-0.5 text-[11px] font-medium capitalize ${
+                      asset.status === "running"
+                        ? "bg-brand-50 text-brand-700"
+                        : "bg-amber-50 text-amber-700"
+                    }`}
+                  >
+                    {asset.status}
+                  </span>
                 </span>
-                <span className="block text-xs text-slate-500">
-                  {rm(asset.remaining)} still to raise
+                <span className="mt-0.5 block text-xs text-slate-500">
+                  {asset.remaining > 0
+                    ? `${rm(asset.remaining)} still to raise`
+                    : "Fully funded — adds to the next batch"}
                 </span>
               </span>
             </label>
@@ -116,12 +138,70 @@ export function InvestForm({
             What {rm(parsed || 0)} would do
           </p>
           <OutcomeTable amount={parsed} plan={plan} poolId={poolId} />
+          <p className="mt-2 rounded-xl bg-brand-50 px-3 py-2 text-sm text-brand-900">
+            Your share of the carbon this asset avoids:{" "}
+            <span className="font-semibold">
+              {(
+                (parsed || 0) *
+                (assets.find((a) => a.id === assetId)?.co2PerRm ?? 0)
+              ).toFixed(3)}{" "}
+              tCO₂e a year
+            </span>
+          </p>
           <p className="mt-2 text-xs text-slate-500">
-            Figures from the Township Green Loop business plan v3. An example,
-            not a promise.
+            An example of what this amount would do, not a promise.
           </p>
         </div>
       ) : null}
+
+      <fieldset>
+        <legend className="text-sm font-medium text-slate-700">
+          How do you want to pay?
+        </legend>
+        <div className="mt-2 space-y-2">
+          {PAY_METHODS.map((option) => (
+            <label
+              key={option.value}
+              className="flex items-start gap-3 rounded-xl border border-slate-300 p-3 has-[:checked]:border-brand-600 has-[:checked]:bg-brand-50"
+            >
+              <input
+                type="radio"
+                name="pay_method"
+                value={option.value}
+                checked={method === option.value}
+                onChange={(e) => setMethod(e.target.value)}
+                className="mt-1 h-4 w-4 accent-brand-700"
+                required
+              />
+              <span>
+                <span className="block text-sm font-medium text-slate-900">
+                  {option.label}
+                </span>
+                <span className="block text-xs text-slate-500">{option.hint}</span>
+              </span>
+            </label>
+          ))}
+        </div>
+      </fieldset>
+
+      <label className="block">
+        <span className="text-sm font-medium text-slate-700">
+          {chosen.refLabel}
+        </span>
+        <select
+          name="pay_ref"
+          className="mt-1 w-full rounded-xl border border-slate-300 bg-white px-3 py-3 text-base outline-none focus:border-brand-600"
+        >
+          {chosen.options.map((option) => (
+            <option key={option} value={option}>
+              {option}
+            </option>
+          ))}
+        </select>
+        <span className="mt-1 block text-xs text-slate-500">
+          Demo only. No card number or banking login is asked for or stored.
+        </span>
+      </label>
 
       <label className="flex items-start gap-3 rounded-xl border border-slate-300 p-3">
         <input

@@ -1,11 +1,11 @@
 import Link from "next/link";
 import { redirect } from "next/navigation";
-import { ArrowLeft, MapPin } from "lucide-react";
+import { ArrowLeft } from "lucide-react";
 import { createClient, getProfile } from "@/lib/supabase/server";
-import { Card, Empty, Section } from "@/components/ui";
+import { Empty, Section } from "@/components/ui";
 import { RoleShell } from "@/app/role-shell";
-import { dayLabel } from "@/lib/format";
 import { ActivityForm } from "./activity-form";
+import { ActivityCard, type ActivityRow } from "./activity-row";
 import { PosterSheet, PrintButton, type Poster } from "./poster";
 
 export const metadata = { title: "Activities · Admin" };
@@ -21,10 +21,7 @@ export default async function AdminActivitiesPage() {
     .select("id, title, kind, points, location, starts_at, checkin_code")
     .order("id");
 
-  const rows = (activities ?? []) as (Poster & {
-    kind: string;
-    starts_at: string | null;
-  })[];
+  const rows = (activities ?? []) as (Poster & ActivityRow)[];
 
   return (
     <RoleShell profile={profile} area="Developer admin">
@@ -50,42 +47,7 @@ export default async function AdminActivitiesPage() {
           {rows.length > 0 ? (
             <div className="space-y-3">
               {rows.map((activity) => (
-                <Card key={activity.id}>
-                  <div className="flex items-start justify-between gap-3">
-                    <span className="text-sm font-medium text-slate-900">
-                      {activity.title}
-                    </span>
-                    <span className="shrink-0 rounded-full bg-brand-50 px-2 py-0.5 text-xs font-medium text-brand-700">
-                      +{activity.points}
-                    </span>
-                  </div>
-                  <p className="mt-1 text-xs capitalize text-slate-500">
-                    {activity.kind.replace("_", " ")}
-                  </p>
-                  {activity.location ? (
-                    <p className="mt-1 inline-flex items-center gap-1 text-xs text-slate-500">
-                      <MapPin className="h-3.5 w-3.5" aria-hidden />
-                      {activity.location}
-                    </p>
-                  ) : null}
-                  {activity.starts_at ? (
-                    <p className="mt-1 text-xs text-slate-400">
-                      {dayLabel(activity.starts_at)}
-                    </p>
-                  ) : null}
-                  <p className="mt-2 text-xs text-slate-500">
-                    Check-in code:{" "}
-                    {activity.checkin_code ? (
-                      <code className="rounded bg-slate-100 px-1.5 py-0.5 font-semibold tracking-widest text-slate-800">
-                        {activity.checkin_code}
-                      </code>
-                    ) : (
-                      <span className="text-slate-400">
-                        none — awarded automatically
-                      </span>
-                    )}
-                  </p>
-                </Card>
+                <ActivityCard key={activity.id} activity={activity} />
               ))}
             </div>
           ) : (

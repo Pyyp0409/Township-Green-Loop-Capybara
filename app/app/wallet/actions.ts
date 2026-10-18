@@ -42,3 +42,51 @@ export async function spendAtMall(
     },
   };
 }
+
+export type ConvertState = { error: string | null; points: number | null };
+
+export async function convertToPoints(
+  _prev: ConvertState,
+  formData: FormData,
+): Promise<ConvertState> {
+  const amount = Number(formData.get("amount"));
+  if (!Number.isFinite(amount) || amount <= 0) {
+    return { error: "Enter an amount more than RM0.", points: null };
+  }
+
+  const supabase = await createClient();
+  const { data, error } = await supabase.rpc("convert_wallet_to_points", {
+    p_amount: amount,
+  });
+
+  // "Not enough in wallet" comes from the database.
+  if (error) return { error: error.message, points: null };
+
+  revalidatePath("/app", "layout");
+  return { error: null, points: Number(data) };
+}
+
+export type PayoutPrefState = { error: string | null; saved: boolean };
+
+export async function savePayoutPreference(
+  _prev: PayoutPrefState,
+  formData: FormData,
+): Promise<PayoutPrefState> {
+  const method = String(formData.get("method") ?? "");
+  const ref = String(formData.get("account_ref") ?? "").trim();
+
+  if (!["bank_transfer", "ewallet", "points"].includes(method)) {
+    return { error: "Pick how you want to be paid.", saved: false };
+  }
+
+  const supabase = await createClient();
+  const { error } = await supabase.rpc("set_payout_preference", {
+    p_method: method,
+    p_ref: ref || null,
+  });
+
+  if (error) return { error: error.message, saved: false };
+
+  revalidatePath("/app/wallet");
+  return { error: null, saved: true };
+}
