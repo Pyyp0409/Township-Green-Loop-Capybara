@@ -220,14 +220,14 @@ Needs Node.js 20+.
 ```bash
 npm install
 cp .env.example .env.local   # fill in the keys
-npm run dev                  # http://localhost:3000
+npm run dev                  
 ```
 
 ```
 NEXT_PUBLIC_SUPABASE_URL=
 NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY=
 ANTHROPIC_API_KEY=           # optional — Sprout falls back to scripted
-                             #   answers and bill scanning asks you to type
+                             # answers and bill scanning asks you to type
 ```
 
 The Supabase `service_role` key is not used anywhere and must not be added.
