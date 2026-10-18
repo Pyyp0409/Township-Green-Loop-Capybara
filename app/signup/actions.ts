@@ -1,5 +1,6 @@
 "use server";
 
+import { headers } from "next/headers";
 import { redirect } from "next/navigation";
 import { revalidatePath } from "next/cache";
 import { createClient } from "@/lib/supabase/server";
@@ -29,13 +30,23 @@ export async function signUp(
     };
   }
 
+  // Build the return address from the request, so it is right on localhost
+  // and on the deployed site without another environment variable.
+  const headerList = await headers();
+  const host = headerList.get("x-forwarded-host") ?? headerList.get("host");
+  const protocol = headerList.get("x-forwarded-proto") ?? "http";
+  const origin = host ? `${protocol}://${host}` : "";
+
   const supabase = await createClient();
   const { data, error } = await supabase.auth.signUp({
     email,
     password,
-    // A database trigger creates the profile and gives every new account the
-    // resident role; full_name is read from here.
-    options: { data: { full_name: fullName } },
+    options: {
+      // A database trigger creates the profile and gives every new account the
+      // resident role; full_name is read from here.
+      data: { full_name: fullName },
+      emailRedirectTo: origin ? `${origin}/auth/callback` : undefined,
+    },
   });
 
   if (error) return { error: error.message, checkEmail: false };

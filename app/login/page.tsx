@@ -9,12 +9,12 @@ export const metadata = { title: "Sign in" };
 export default async function LoginPage({
   searchParams,
 }: {
-  searchParams: Promise<{ next?: string }>;
+  searchParams: Promise<{ next?: string; message?: string }>;
 }) {
   const profile = await getProfile();
   if (profile) redirect(homeFor(profile));
 
-  const { next } = await searchParams;
+  const { next, message } = await searchParams;
 
   return (
     <main className="mx-auto w-full max-w-sm px-4 pb-16 pt-14">
@@ -31,6 +31,15 @@ export default async function LoginPage({
         You land on the right screen for your role. Judging this? Pick an account
         below and the form fills itself.
       </p>
+
+      {message ? (
+        <p
+          role="status"
+          className="mt-4 rounded-xl bg-amber-50 px-3 py-2 text-sm text-amber-800 ring-1 ring-amber-200"
+        >
+          {message}
+        </p>
+      ) : null}
 
       <LoginForm next={next ?? ""} />
 
