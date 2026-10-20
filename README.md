@@ -136,7 +136,7 @@ Everything runs on free tiers.
                  │  Server Components ── read via SSR client│
                  │  Server Actions ───── write via SSR client│
                  │  /api/agent ───────── Claude, streamed   │
-                 │  /api/scan-bill ───── Gemini vision      │
+                 │  /api/scan-bill ───── Claude vision      │
                  │  /api/report ──────── CSV export         │
                  └───────────────┬──────────────────────────┘
                                  │ publishable key only
