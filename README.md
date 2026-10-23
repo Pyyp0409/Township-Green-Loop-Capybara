@@ -5,8 +5,9 @@ points and cleaner air.**
 
 Sime Darby Property University Hackathon 2026 · Theme: Planet
 Live demo: https://township-green-loop-capybara.vercel.app
-Team Capybara — Chua Pei Ying, Wong Ying Jie, Gabriela Renata · Asia Pacific
-University of Technology and Innovation
+
+Team Capybara — Chua Pei Ying, Wong Ying Jie, Gabriela Renata
+Institution - Asia Pacific University of Technology and Innovation
 
 ---
 
