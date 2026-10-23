@@ -2,7 +2,7 @@
 -- Township Green Loop — v5
 -- Run ONCE in Supabase > SQL Editor, AFTER setup_v4.sql. Safe to re-run.
 --
--- Brings the database in line with Business_Plan_Final Ver:
+-- Brings the database in line with Business_Plan_Final:
 --   A. Badges reward green actions only, never money
 --   B. Resident priority on every raise, recorded so the app can show it
 --   C. One top investor demo account, for checking every screen at once

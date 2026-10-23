@@ -268,7 +268,7 @@ Per township developer, modelled over five years:
 | Raised from residents | RM3.2m | RM5.0m |
 | Residents' profit | RM82,163 | RM636,880 |
 | Solar running | 1.5 MW | 17.5 MW |
-| **CO₂ avoided a year** | **1,534 tCO₂e** | **16,921 tCO₂e** |
+| **CO₂ avoided a year** | **1,519 tCO₂e** | **16,845 tCO₂e** |
 
 Reaching **20 MW in five years**, matching the **SDP × GSPARX JV target**.
 
@@ -378,7 +378,7 @@ overclaim discounts everything else.
 6. **We show the bad case too** — normal vs conservative side by side
 7. **Beyond investing** — points, check-in approval, badges, bills, community
 8. **Architecture** — the diagram from §5, with the trigger arrow highlighted
-9. **Impact** — the Year 1 / Year 5 table, 16,921 tCO₂e as the hero number
+9. **Impact** — the Year 1 / Year 5 table, 16,845 tCO₂e as the hero number
 10. **Live demo** — QR to the URL, demo accounts, "try it now"
 
 Slide 6 is the one most teams won't have. Lead on it in Q&A.
@@ -391,7 +391,7 @@ Slide 6 is the one most teams won't have. Lead on it in Q&A.
 | 0:20–0:40 | The idea, in one sentence, over the landing page |
 | 0:40–1:40 | **Screen recording**: invest with the risk statement and carbon share → check-in request → admin approves → payout runs → wallet → mall credit → shop accepts → shop refuses the reuse |
 | 1:40–2:10 | Sprout answering a real question, fast |
-| 2:10–2:30 | Impact numbers; 16,921 tCO₂e |
+| 2:10–2:30 | Impact numbers; 16,845 tCO₂e |
 | 2:30–2:45 | "Demo data, built in a week, live at this URL." Close on the QR |
 
 Record the walkthrough in one unbroken take if you can. Judges have seen enough

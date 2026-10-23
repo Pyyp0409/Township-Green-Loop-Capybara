@@ -5,6 +5,8 @@ points and cleaner air.**
 
 Sime Darby Property University Hackathon 2026 · Theme: Planet
 Live demo: https://township-green-loop-capybara.vercel.app
+Team Capybara — Chua Pei Ying, Wong Ying Jie, Gabriela Renata · Asia Pacific
+University of Technology and Innovation
 
 ---
 
@@ -192,7 +194,7 @@ Per township developer, modelled over five years:
 | Raised from residents | RM3.2m | RM5.0m |
 | Residents' profit | RM82,163 | RM636,880 |
 | Solar running | 1.5 MW | 17.5 MW |
-| **CO₂ avoided a year** | **1,534 tCO₂e** | **16,921 tCO₂e** |
+| **CO₂ avoided a year** | **1,519 tCO₂e** | **16,845 tCO₂e** |
 
 Reaching **20 MW in five years**, matching the SDP × GSPARX JV target.
 
